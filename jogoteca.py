@@ -1,45 +1,29 @@
-from re import L
-from flask import Flask, redirect, render_template, \
-    request, redirect, session, flash, url_for
-
-
-class Jogo:
-    def __init__(self, nome, categoria, console):
-        self.nome = nome
-        self.categoria = categoria
-        self.console = console
-
-
-jogo1 = Jogo('Tetris', 'Puzzle', 'Atari')
-jogo3 = Jogo('Mortal Kombat', 'Luta', 'PS2')
-jogo2 = Jogo('God of War', 'Rack n Slash', 'PS2')
-lista = [jogo1, jogo2, jogo3]
-
-
-class Usuário:
-    def __init__(self, nome, nickname, senha):
-        self.nome = nome
-        self.nickname = nickname
-        self.senha = senha
-
-
-usuario1 = Usuário('Emily', 'ECV', '123')
-usuario2 = Usuário('Roberto', 'RB', '321')
-usuario3 = Usuário('Marcela', 'MRL', '312')
-
-usuarios = {
-    usuario1.nickname: usuario1,
-    usuario2.nickname: usuario2,
-    usuario3.nickname: usuario3
-}
-
+import os
+from flask import (Flask, flash, redirect, render_template, request, session,
+                   url_for)
+from App.models.jogo import Jogo
+from App.models.usuario import Usuario
+from persistence.database.dao import JogoDao, UsuarioDao
+from flask_mysqldb import MySQL
 
 app = Flask(__name__)
 app.secret_key = 'alura'
 
+app.config['MYSQL_HOST'] = "0.0.0.0"
+app.config['MYSQL_USER'] = "root"
+app.config['MYSQL_PASSWORD'] = "admin"
+app.config['MYSQL_DB'] = "jogoteca"
+app.config['MYSQL_PORT'] = 3306
+
+db = MySQL(app)
+
+jogo_dao = JogoDao(db)
+usuario_dao = UsuarioDao(db)
+
 
 @app.route('/')
 def index():
+    lista = jogo_dao.listar()
     return render_template('lista.html', titulo='Jogos', jogos=lista)
 
 
@@ -56,7 +40,7 @@ def criar():
     categoria = request.form['categoria']
     console = request.form['console']
     jogo = Jogo(nome, categoria, console)
-    lista.append(jogo)
+    jogo_dao.salvar(jogo)
     return redirect(url_for('index'))
 
 
@@ -68,8 +52,8 @@ def login():
 
 @app.route('/autenticar', methods=['POST', ])
 def autenticar():
-    if request.form['usuario'] in usuarios:
-        usuario = usuarios[request.form['usuario']]
+    usuario = usuario_dao.busca_por_id(request.form['usuario'])
+    if usuario:
         if request.form['senha'] == usuario.senha:
             session['usuario_logado'] = usuario.nickname
             flash(usuario.nickname +
