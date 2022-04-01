@@ -15,15 +15,13 @@ class JogoDao:
         self.__db = db
 
     def salvar(self, jogo):
-        # cursor.execute(SQL_USUARIO_POR_ID.format(id,))
         cursor = self.__db()
-
         if (jogo.id):
             cursor.execute(SQL_ATUALIZA_JOGO.format(jogo.nome,
                            jogo.categoria, jogo.console, jogo.id))
         else:
             cursor.execute(SQL_CRIA_JOGO.format(jogo.nome,
-                           jogo.categoria, jogo.console))
+                           jogo.categoria, jogo.console, jogo.id))
         cursor.commit()
         return jogo
 
