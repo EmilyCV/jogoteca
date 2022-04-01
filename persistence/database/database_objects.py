@@ -8,7 +8,7 @@ Base = declarative_base()
 
 class Jogo(Base):
     __tablename__ = 'jogo'
-    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     nome = Column(String, nullable=False)
     categoria = Column(String, nullable=False)
     console = Column(String, nullable=False)
