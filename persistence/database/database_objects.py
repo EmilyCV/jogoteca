@@ -13,7 +13,7 @@ class Jogo(Base):
     categoria = Column(String, nullable=False)
     console = Column(String, nullable=False)
 
-    def __init__(self, id=int, nome=str, categoria=str, console=str):
+    def __init__(self, id: int, nome: str, categoria: str, console: str):
         self.id = id
         self.nome = nome
         self.categoria = categoria
@@ -24,11 +24,13 @@ class Usuario(Base):
     __tablename__ = 'usuario'
     id = Column(Integer, primary_key=True, nullable=False)
     nome = Column(String, nullable=False)
+    email = Column(String, primary_key=True, nullable=False)
     senha = Column(String, nullable=False)
 
-    def __init__(self, id=int, nome=str, senha=str):
+    def __init__(self, id: int, nome: str, email: str, senha: str):
         self.id = id
         self.nome = nome
+        self.email = email
         self.senha = senha
 
 # import sqlite3
