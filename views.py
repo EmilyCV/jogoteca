@@ -117,14 +117,16 @@ def login():
 def autenticar():
     usuario = usuario_dao.buscar_por_id(request.form['usuario'])
     if usuario:
-        if check_password_hash(usuario.senha,request.form['senha']):
+        if check_password_hash(usuario.senha,request.form['senha']) == False:
+            flash('Usuário ou senha inválidos.')
+            return redirect(url_for('login'))
+        elif check_password_hash(usuario.senha,request.form['senha']):
             session['usuario_logado'] = usuario.nome
             flash(usuario.nome +
                   ' logado(a) com sucesso!')
-            proxima_pagina = request.form['proxima']
-            return redirect(proxima_pagina)
+            return redirect(url_for('index'))
     else:
-        flash('Usuário não logado!')
+        flash('Usuário não existe!')
         return redirect(url_for('login'))
 
 
