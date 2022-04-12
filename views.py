@@ -35,12 +35,18 @@ def cadastrar():
     nome_completo = request.form['nome']
     email = request.form['email']
     senha = request.form['password']
-
-    senha_hash = generate_password_hash(senha, method='sha256')
     
-    usuario = Usuario(nome_user, nome_completo, email, senha_hash)
-    usuario = usuario_dao.salvar(usuario)
-    return redirect(url_for('index'))
+    if usuario_dao.buscar_por_id(nome_user):
+        flash('Nome de Usuário já cadastrado.')
+        return redirect(url_for('cadastro'))
+    if usuario_dao.buscar_por_email(email):
+        flash('E-mail já cadastrado.')
+        return redirect(url_for('cadastro'))
+    else:  
+        senha_hash = generate_password_hash(senha, method='sha256')
+        usuario = Usuario(nome_user, nome_completo, email, senha_hash)
+        usuario = usuario_dao.salvar(usuario)
+        return redirect(url_for('index'))
 
 
 @app.route('/novo')
