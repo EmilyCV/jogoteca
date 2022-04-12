@@ -4,10 +4,12 @@ from persistence.database.database import Session
 
 SQL_DELETA_JOGO = "DELETE FROM jogo WHERE id = '{}'"
 SQL_JOGO_POR_ID = "SELECT id, nome, categoria, console FROM jogo WHERE id = '{}'"
-SQL_USUARIO_POR_ID = "SELECT id, nome, senha FROM usuario WHERE id = '{}'"
+SQL_USUARIO_POR_ID = "SELECT id, nome, email, senha FROM usuario WHERE id = '{}'"
+SQL_USUARIO_POR_EMAIL = "SELECT id, nome, email, senha FROM usuario WHERE email = '{}'"
 SQL_ATUALIZA_JOGO = "UPDATE jogo SET nome='{}', categoria='{}', console='{}' WHERE id = '{}'"
 SQL_BUSCA_JOGOS = "SELECT * FROM jogo"
 SQL_CRIA_JOGO = "INSERT INTO jogo (nome, categoria, console) VALUES ('{}', '{}', '{}')"
+SQL_CRIA_USUARIO = "INSERT INTO usuario (id,nome, email, senha) VALUES ('{}','{}', '{}', '{}')"
 
 
 class JogoDao:
@@ -47,9 +49,23 @@ class UsuarioDao:
     def __init__(self, db: Session):
         self.__db = db
 
+    def salvar(self, usuario):
+        cursor = self.__db()
+        cursor.execute(SQL_CRIA_USUARIO.format(usuario.id, usuario.nome,
+                                               usuario.email, usuario.senha))
+        cursor.commit()
+        return usuario
+
     def buscar_por_id(self, id):
         cursor = self.__db()
         buscar_usuario = cursor.execute(SQL_USUARIO_POR_ID.format(id,))
+        dados = buscar_usuario.fetchone()
+        usuario = traduz_usuario(dados) if dados else None
+        return usuario
+    
+    def buscar_por_email(self, email):
+        cursor = self.__db()
+        buscar_usuario = cursor.execute(SQL_USUARIO_POR_EMAIL.format(email,))
         dados = buscar_usuario.fetchone()
         usuario = traduz_usuario(dados) if dados else None
         return usuario
@@ -62,4 +78,4 @@ def traduz_jogos(jogos):
 
 
 def traduz_usuario(tupla):
-    return Usuario(tupla[0], tupla[1], tupla[2])
+    return Usuario(tupla[0], tupla[1], tupla[2], tupla[3])

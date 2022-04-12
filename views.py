@@ -2,10 +2,12 @@ import time
 from flask import (Flask, flash, redirect, render_template, request,
                    send_from_directory, session, url_for)
 from App.models.jogo import Jogo
+from App.models.usuario import Usuario
 from helpers import deleta_arquivo, recupera_imagem
 from jogoteca import app
 from persistence.database.dao import JogoDao, UsuarioDao
 from persistence.database.database import Session
+from werkzeug.security import generate_password_hash, check_password_hash
 
 jogo_dao = JogoDao(Session)
 usuario_dao = UsuarioDao(Session)
@@ -14,7 +16,37 @@ usuario_dao = UsuarioDao(Session)
 @app.route('/')
 def index():
     lista = jogo_dao.listar()
-    return render_template('lista.html', titulo='Jogos', jogos=lista)
+    usuario_logado = False
+    if 'usuario_logado' not in session or session['usuario_logado'] == None:
+        return render_template('lista.html', titulo='Jogos', jogos=lista, usuario = usuario_logado)
+    else:
+        usuario_logado = True
+        return render_template('lista.html', titulo='Jogos', jogos=lista, usuario = usuario_logado)
+
+
+@app.route('/cadastro')
+def cadastro():
+    return render_template('cadastro.html', titulo='Novo Usuário')
+
+
+@app.route('/cadastrar', methods=['POST', ])
+def cadastrar():
+    nome_user = request.form['usuario']
+    nome_completo = request.form['nome']
+    email = request.form['email']
+    senha = request.form['password']
+    
+    if usuario_dao.buscar_por_id(nome_user):
+        flash('Nome de Usuário já cadastrado.')
+        return redirect(url_for('cadastro'))
+    if usuario_dao.buscar_por_email(email):
+        flash('E-mail já cadastrado.')
+        return redirect(url_for('cadastro'))
+    else:  
+        senha_hash = generate_password_hash(senha, method='sha256')
+        usuario = Usuario(nome_user, nome_completo, email, senha_hash)
+        usuario = usuario_dao.salvar(usuario)
+        return redirect(url_for('index'))
 
 
 @app.route('/novo')
@@ -91,14 +123,16 @@ def login():
 def autenticar():
     usuario = usuario_dao.buscar_por_id(request.form['usuario'])
     if usuario:
-        if request.form['senha'] == usuario.senha:
+        if check_password_hash(usuario.senha,request.form['senha']) == False:
+            flash('Usuário ou senha inválidos.')
+            return redirect(url_for('login'))
+        elif check_password_hash(usuario.senha,request.form['senha']):
             session['usuario_logado'] = usuario.nome
             flash(usuario.nome +
                   ' logado(a) com sucesso!')
-            proxima_pagina = request.form['proxima']
-            return redirect(proxima_pagina)
+            return redirect(url_for('index'))
     else:
-        flash('Usuário não logado!')
+        flash('Usuário não existe!')
         return redirect(url_for('login'))
 
 
