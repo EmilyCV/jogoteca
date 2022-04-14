@@ -18,10 +18,10 @@ def index():
     lista = jogo_dao.listar()
     usuario_logado = False
     if 'usuario_logado' not in session or session['usuario_logado'] == None:
-        return render_template('lista.html', titulo='Jogos', jogos=lista, usuario = usuario_logado)
+        return render_template('lista.html', titulo='Jogos', jogos=lista, usuario=usuario_logado)
     else:
         usuario_logado = True
-        return render_template('lista.html', titulo='Jogos', jogos=lista, usuario = usuario_logado)
+        return render_template('lista.html', titulo='Jogos', jogos=lista, usuario=usuario_logado)
 
 
 @app.route('/cadastro')
@@ -35,14 +35,14 @@ def cadastrar():
     nome_completo = request.form['nome']
     email = request.form['email']
     senha = request.form['password']
-    
+
     if usuario_dao.buscar_por_id(nome_user):
         flash('Nome de Usuário já cadastrado.')
         return redirect(url_for('cadastro'))
     if usuario_dao.buscar_por_email(email):
         flash('E-mail já cadastrado.')
         return redirect(url_for('cadastro'))
-    else:  
+    else:
         senha_hash = generate_password_hash(senha, method='sha256')
         usuario = Usuario(nome_user, nome_completo, email, senha_hash)
         usuario = usuario_dao.salvar(usuario)
@@ -81,7 +81,7 @@ def criar():
 @app.route('/editar/<int:id>')
 def editar(id):
     if 'usuario_logado' not in session or session['usuario_logado'] == None:
-        return redirect(url_for('login', proxima=url_for('editar')))
+        return redirect(url_for('login', proxima=url_for('editar', id=id)))
     jogo = jogo_dao.busca_por_id(id)
     nome_imagem = recupera_imagem(id)
     return render_template('editar.html', titulo='Editando Jogo', jogo=jogo, capa_jogo=nome_imagem)
@@ -108,6 +108,8 @@ def atualizar():
 
 @app.route('/deletar/<int:id>')
 def deletar(id):
+    if 'usuario_logado' not in session or session['usuario_logado'] == None:
+        return redirect(url_for('login', proxima=url_for('deletar', id=id)))
     jogo_dao.deletar(id)
     flash('O jogo foi removido com sucesso!')
     return redirect(url_for('index'))
@@ -123,14 +125,18 @@ def login():
 def autenticar():
     usuario = usuario_dao.buscar_por_id(request.form['usuario'])
     if usuario:
-        if check_password_hash(usuario.senha,request.form['senha']) == False:
+        if check_password_hash(usuario.senha, request.form['senha']) == False:
             flash('Usuário ou senha inválidos.')
             return redirect(url_for('login'))
-        elif check_password_hash(usuario.senha,request.form['senha']):
+        elif check_password_hash(usuario.senha, request.form['senha']):
             session['usuario_logado'] = usuario.nome
-            flash(usuario.nome +
-                  ' logado(a) com sucesso!')
-            return redirect(url_for('index'))
+            proxima_pagina = request.form['proxima']
+            if proxima_pagina != "None":
+                return redirect(proxima_pagina)
+            else:
+                flash(usuario.nome +
+                      ' logado(a) com sucesso!')
+                return redirect(url_for('index'))
     else:
         flash('Usuário não existe!')
         return redirect(url_for('login'))
